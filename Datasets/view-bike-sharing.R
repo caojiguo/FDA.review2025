@@ -1,10 +1,12 @@
+# set working directory to currect file location
+
 library(tidyr)
 library(dplyr)
 library(ggplot2)
 
 # bike sharing data --------------------
 
-bikedata = read.csv("Datasets/bike_sharing/hour.csv")
+bikedata = read.csv("bike_sharing/hour.csv")
 unique_days = bikedata$dteday |> unique()
 unique_days = unique_days[1:365]
 gridobj = expand.grid(hr = 1:24, dteday = unique_days[1:365])
@@ -38,4 +40,3 @@ tidy_data |>
   facet_wrap(~Variable, scales = "free") +
   scale_color_gradientn(colors = rainbow(10)) +
   theme_bw()
-

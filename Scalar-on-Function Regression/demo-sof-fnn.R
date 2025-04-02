@@ -1,9 +1,12 @@
 
 library(fda)
+library(torch)
 library(dplyr)
 library(tidyr)
 library(tibble)
 library(ggplot2)
+
+source("SoFNN.R")
 
 data(Fatspectrum, package = "fds")
 data(Fatvalues, package = "fds")
@@ -40,7 +43,7 @@ plot(sofnn$func_weights[[1]], xlab="t", ylab="", main="Functional Weights")
 par(mfrow=c(1,1))
 # dev.off()
 
-ggsave("figures/tecator.jpg", width = 5, height = 3.5)
+# ggsave("figures/tecator.jpg", width = 5, height = 3.5)
 
 sofnn = fit.sofnn(
   y, X, tgrid = tvals, lambda = 1e3, nbasis = 11,
