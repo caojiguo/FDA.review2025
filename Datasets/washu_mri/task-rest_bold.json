@@ -1,0 +1,10 @@
+{
+  "RepetitionTime": 2.5,
+  "TaskName": "rest",
+  "EchoTime": 0.027,
+  "FlipAngle": 90,
+  "Manufacturer": "Siemens",
+  "ManufacturersModelName": "MAGNETOM Trio",
+  "MagneticFieldStrength": 3.0,
+  "ReceiveCoilName": "Siemens 12 channel Head Matrix Coil (Erlangen, Germany)"
+}
