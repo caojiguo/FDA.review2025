@@ -1,6 +1,7 @@
 ---
 title: "Functional Neural Network for Scalar-on-Function Regression"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
 ---
