@@ -1,4 +1,4 @@
-# Functional Autoencoders for Discrete Functional Data
+# Functional Autoencoders
 
 This directory contains the dataset and Python code for the implement the functional autoencoder (FAE) methodology presented in the manuscript ["Functional Autoencoder for Smoothing and Representation Learning"](https://link.springer.com/article/10.1007/s11222-023-10287-3.). For a more comprehensive implementation, including additional features and documentation, please refer to the complete code repository: [Functional Autoencoder (FAE) Github Repository](https://github.com/CedricBeaulac/FAE).
 
