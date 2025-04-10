@@ -1,8 +1,9 @@
-This folder should consist of one .RData file and two .R files, including: 
+# Neural Networks for Function-on-Scalar Regression
 
+This directory contains the dataset and R code for implementing the neural netowrk-based function-on-scalar regression models (NNBB, NNSS, NNBR & NNSR) proposed in the manuscript "[Neural Networks for Scalar Input and Functional Output](https://link.springer.com/article/10.1007/s11222-023-10287-3)".
 
-1. asfr.RData: the age-specific fertility rate (ASFR) data set.
+### Files
 
-2. FoS_reg_functions.R: includes the main functions to impletment the neural network-based (NN-based) function-on-scalar (FoS) regression models (NNBB, NNSS, NNBR & NNSR) proposed in the manuscript "Neural Networks for Scalar Input and Functional Output", along with two existing models (FoS linear and FAM). This file needs to be sourced.
-
-3. FoS_reg_demo.R: contains the R codes for analyzing the age-specific fertility rate data set using the NN-based models (NNBB, NNSS, NNBR & NNSR) and the tranditional approaches (FoS linear and FAM).
+- `asfr.RData`: the age-specific fertility rate (ASFR) data set.
+- `FoS_reg_functions.R`: the main functions to impletment NNBB, NNSS, NNBR & NNSR, along with two existing models (FoS linear and FAM). This file needs to be sourced.
+- `FoS_reg_demo.R`: code for analyzing the age-specific fertility rate data set using the NN-based models (NNBB, NNSS, NNBR & NNSR) and the tranditional approaches (FoS linear and FAM).
