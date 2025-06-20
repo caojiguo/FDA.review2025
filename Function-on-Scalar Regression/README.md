@@ -1,6 +1,6 @@
 # Neural Networks for Function-on-Scalar Regression
 
-This directory contains the dataset and R implementation for the neural netowrk-based function-on-scalar (FoS) regression models, including NNBB, NNSS, NNBR & NNSR, introduced in the manuscript "[Neural Networks for Scalar Input and Functional Output](https://link.springer.com/article/10.1007/s11222-023-10287-3)".
+This directory contains the dataset and R implementation for the neural netowrk-based function-on-scalar (FoS) regression models, including NNBB, NNSS, NNBR & NNSR, introduced in the manuscript "[Neural Networks for Scalar Input and Functional Output](https://doi.org/10.1007/s11222-023-10287-3)".
 
 ### Files
 
