@@ -1,5 +1,8 @@
 message("============ Experiment: SoF - Tecator ===============")
 
+# Requirements:
+# set the working directory to "Scalar-on-Function Regression"
+
 library(fda)
 library(fdapace)
 library(refund)

@@ -1,5 +1,7 @@
 message("============ Experiment: SoF - DTI ===============")
 
+# Requirements:
+# set the working directory to "Scalar-on-Function Regression"
 
 library(fda)
 library(fdapace)
@@ -15,7 +17,7 @@ print(torch_get_num_threads())
 
 source("R/SoFNN.R")
 
-save_dir <- file.path("results", "sof-dti") 
+save_dir <- file.path("results", "sof-dti")
 if (!dir.exists(save_dir)) {
   dir.create(save_dir, recursive = TRUE)
 }
@@ -27,21 +29,20 @@ USE_SAVED_MODELS <- FALSE
 
 data(DTI)
 
-# DTI_subset <- subset(DTI, visit == 1 & case == 1)
 DTI_subset <- subset(DTI, case == 1)
-complete_id = (rowSums(is.na(DTI_subset$cca)) < 4) & (rowSums(is.na(DTI_subset$rcst)) < 4)
+complete_id <- (rowSums(is.na(DTI_subset$cca)) < 4) & (rowSums(is.na(DTI_subset$rcst)) < 4)
 DTI_subset <- DTI_subset[complete_id, ]
 
 DTI_subset <- DTI_subset |>
-  filter(pasat > quantile(pasat, 0.01)) |> 
-  mutate(subj_visit = paste0('s', ID, 'v', visit))
+  filter(pasat > quantile(pasat, 0.01)) |>
+  mutate(subj_visit = paste0("s", ID, "v", visit))
 
-n = nrow(DTI_subset)
+n <- nrow(DTI_subset)
 
 # scalar response: pasat
-y = DTI_subset$pasat
+y <- DTI_subset$pasat
 # functional covariates: cca, rcst
-X = list(
+X <- list(
   cca = DTI_subset$cca,
   rcst = DTI_subset$rcst
 )
@@ -52,7 +53,7 @@ colnames(X$rcst) <- 1:ncol(X$rcst)
 #   sex = if_else(DTI_subset$sex == "male", 1, 0),
 #   DTI_subset$visit
 # )
-tgrid = list(
+tgrid <- list(
   cca = 1:ncol(X$cca),
   rcst = 1:ncol(X$rcst)
 )
@@ -66,52 +67,58 @@ cca_tidy <- cbind(
   subj = DTI_subset$ID,
   visit = DTI_subset$visit,
   X$cca, PASAT = y
-) |> 
-  as_tibble() |> 
-  mutate(sv = DTI_subset$subj_visit) |> 
-  filter(visit == 1) |> 
+) |>
+  as_tibble() |>
+  mutate(sv = DTI_subset$subj_visit) |>
+  filter(visit == 1) |>
   pivot_longer(
     cols      = as.character(tgrid$cca),
     names_to  = "Location",
     values_to = "Value"
-  ) |> 
-  mutate(Location = as.numeric(Location),
-         Measure = "CCA")
+  ) |>
+  mutate(
+    Location = as.numeric(Location),
+    Measure = "CCA"
+  )
 
 rcst_tidy <- cbind(
   subj = DTI_subset$ID,
   visit = DTI_subset$visit,
   X$rcst, PASAT = y
-) |> 
-  as_tibble() |> 
-  mutate(sv = DTI_subset$subj_visit) |> 
-  filter(visit == 1) |> 
+) |>
+  as_tibble() |>
+  mutate(sv = DTI_subset$subj_visit) |>
+  filter(visit == 1) |>
   pivot_longer(
     cols      = as.character(tgrid$rcst),
     names_to  = "Location",
     values_to = "Value"
-  ) |> 
-  mutate(Location = as.numeric(Location),
-         Measure = "RCST")
+  ) |>
+  mutate(
+    Location = as.numeric(Location),
+    Measure = "RCST"
+  )
 
 # a shared colour scale object
-pasat_breaks <- c(0, 20, 40, 60)      # include 0 here
-pasat_limits <- range(pasat_breaks)   # c(0, 60)
+pasat_breaks <- c(0, 20, 40, 60) # include 0 here
+pasat_limits <- range(pasat_breaks) # c(0, 60)
 
-library(viridis)   # if not already installed, run: install.packages("viridis")
+library(viridis) # if not already installed, run: install.packages("viridis")
 
 shared_scale <- scale_colour_viridis_c(
   name      = "PASAT",
   breaks    = pasat_breaks,
   limits    = pasat_limits,
-  option    = "viridis",  #"cividis", “viridis”, “magma”, “plasma”, “inferno”, etc.
+  option    = "viridis", # "cividis", “viridis”, “magma”, “plasma”, “inferno”, etc.
   direction = 1
 )
 
 # two panels, each gets the same scale
-p1 <- ggplot(cca_tidy,
-  aes(Location, Value, colour = PASAT, group = sv)) +
-  geom_line(alpha=0.7) +
+p1 <- ggplot(
+  cca_tidy,
+  aes(Location, Value, colour = PASAT, group = sv)
+) +
+  geom_line(alpha = 0.7) +
   labs(x = "Location", y = "CCA") +
   shared_scale +
   theme_bw() +
@@ -122,7 +129,7 @@ p1 <- ggplot(cca_tidy,
   )
 
 p2 <- ggplot(rcst_tidy, aes(Location, Value, colour = PASAT, group = sv)) +
-  geom_line(alpha=0.7) +
+  geom_line(alpha = 0.7) +
   labs(x = "Location", y = "RCST") +
   shared_scale +
   theme_bw() +
@@ -135,23 +142,25 @@ p2 <- ggplot(rcst_tidy, aes(Location, Value, colour = PASAT, group = sv)) +
 
 # patch together, collect the legend, and force equal panel sizes
 (p1 + p2) +
-  plot_layout(ncol = 2,     # side by side
-              guides = "collect") &  # share legend
-  theme(legend.position = "right")  # or "right"
+  plot_layout(
+    ncol = 2, # side by side
+    guides = "collect"
+  ) & # share legend
+  theme(legend.position = "right") # or "right"
 
-ggsave(file.path(save_dir, "DTI.pdf"), device = "pdf", width = 7, height = 3)
+# ggsave(file.path(save_dir, "DTI.pdf"), device = "pdf", width = 7, height = 3)
 
 
 # Train-Test Split --------------------------------------------------------
 
-seed = 1234
+seed <- 1234
 set.seed(seed)
 nfold <- 5
 folds <- sample(rep(seq_len(nfold), length.out = n))
 
 # define data collection and a slicing helper
-dataList = list(y = y, X = X, Z = NULL)
-dataSlicer = function(dataList, idx) {
+dataList <- list(y = y, X = X, Z = NULL)
+dataSlicer <- function(dataList, idx) {
   list(
     y = dataList$y[idx],
     X = lapply(dataList$X, \(Xj) Xj[idx, , drop = F]),
@@ -160,15 +169,15 @@ dataSlicer = function(dataList, idx) {
 }
 
 # train and test from the 1st fold
-trainData = dataSlicer(dataList, folds != 1)
-testData = dataSlicer(dataList, folds == 1)
+trainData <- dataSlicer(dataList, folds != 1)
+testData <- dataSlicer(dataList, folds == 1)
 
 # FNN  ----------------------------------------------
 
 message("================ Start FNNs ================")
 
 # define helper functions for cross-validation evaluation
-modelFitAndEval = function(trainData, testData, model=NULL, ...) {
+modelFitAndEval <- function(trainData, testData, model = NULL, ...) {
   # fill missing values in cca and rcst
   trainData$X$cca <- fpcaImpute(trainData$X$cca, tgrid$cca)$X
   trainData$X$rcst <- fpcaImpute(trainData$X$rcst, tgrid$rcst)$X
@@ -176,7 +185,7 @@ modelFitAndEval = function(trainData, testData, model=NULL, ...) {
   testData$X$rcst <- fpcaImpute(testData$X$rcst, tgrid$rcst)$X
   nbasis.cca <- smoothBsplGCV(trainData$X$cca, tgrid$cca, nbasis.min = 10)$nbasis # %/% 2
   nbasis.rcst <- smoothBsplGCV(trainData$X$rcst, tgrid$rcst, nbasis.min = 10)$nbasis # %/% 2
-  sofnn = if (is.null(model)) {
+  sofnn <- if (is.null(model)) {
     fit.sofnn(
       trainData$y, trainData$X, trainData$Z,
       tgrid = tgrid,
@@ -184,8 +193,10 @@ modelFitAndEval = function(trainData, testData, model=NULL, ...) {
       lambda = 1e-6,
       ...
     )
-  } else {model}
-  ypred = predict.sofnn.fit(
+  } else {
+    model
+  }
+  ypred <- predict.sofnn.fit(
     sofnn,
     testData$X, testData$Z,
     tgrid = tgrid
@@ -240,38 +251,41 @@ message("================ Start fdapace::FLM ================")
 # rdsfile <- file.path(save_dir, paste0("cvFLMpace-sd", seed, ".rds"))
 
 # define helper functions for cross-validation evaluation
-dataConvert = function(dataList) {
-  n = length(dataList$y)
+dataConvert <- function(dataList) {
+  n <- length(dataList$y)
   out <- list(
     Y = dataList$y,
     X = lapply(
       names(dataList$X), \(v) list(
-      Ly = lapply(1:n, \(i) X[[v]][i,]),
-      Lt = rep(list(tgrid[[v]]), n)
-    ))
+        Ly = lapply(1:n, \(i) X[[v]][i, ]),
+        Lt = rep(list(tgrid[[v]]), n)
+      )
+    )
   )
   names(out$X) <- names(dataList$X)
   out
 }
 paceOptns <- list(
   dataType = "Dense",
-  FVEthreshold=0.95,
+  FVEthreshold = 0.95,
   methodBwMu = "GCV",
   methodBwCov = "GCV"
 )
-modelFitAndEval = function(trainData, testData, model=NULL, ...) {
+modelFitAndEval <- function(trainData, testData, model = NULL, ...) {
   trainData$X$cca <- fpcaImpute(trainData$X$cca, tgrid$cca)$X
   trainData$X$rcst <- fpcaImpute(trainData$X$rcst, tgrid$rcst)$X
   testData$X$cca <- fpcaImpute(testData$X$cca, tgrid$cca)$X
   testData$X$rcst <- fpcaImpute(testData$X$rcst, tgrid$rcst)$X
-  trainDataC = dataConvert(trainData)
-  testDataC = dataConvert(testData)
-  flm = if (is.null(model)) {
+  trainDataC <- dataConvert(trainData)
+  testDataC <- dataConvert(testData)
+  flm <- if (is.null(model)) {
     fdapace::FLM(
       trainDataC$Y, trainDataC$X, testDataC$X,
       optnsListX = paceOptns
     )
-  } else {model}
+  } else {
+    model
+  }
   list(
     model = flm,
     trainSEs = c((flm$yHat - trainDataC$Y)^2),
@@ -283,7 +297,7 @@ modelFitAndEval = function(trainData, testData, model=NULL, ...) {
   )
 }
 
-res_pcflm = modelFitAndEval(trainData, testData)
+res_pcflm <- modelFitAndEval(trainData, testData)
 se_pcflm_train <- res_pcflm$trainSEs
 se_pcflm_test <- res_pcflm$testSEs
 mse_pcflm_train <- res_pcflm$trainErr
@@ -318,7 +332,7 @@ dataConvert <- function(dataList) {
     X.rcst = I(dataList$X$rcst)
   )
 }
-modelFitAndEval <- function(trainData, testData, model=NULL, ...) {
+modelFitAndEval <- function(trainData, testData, model = NULL, ...) {
   # Prepare data frames for mgcv::gam (pfr)
   trainData$X$cca <- fpcaImpute(trainData$X$cca, tgrid$cca)$X
   trainData$X$rcst <- fpcaImpute(trainData$X$rcst, tgrid$rcst)$X
@@ -331,13 +345,19 @@ modelFitAndEval <- function(trainData, testData, model=NULL, ...) {
   # Fit penalized FLM with B-spline basis for beta(t)
   flm <- if (is.null(model)) {
     refund::pfr(
-      Y ~ lf(X.cca, argvals = tgrid$cca, integration = "trapezoidal",
-          bs = "ps", k = nbasis.cca) + 
-        lf(X.rcst, argvals = tgrid$rcst, integration = "trapezoidal",
-           bs = "ps", k = nbasis.rcst), 
+      Y ~ lf(X.cca,
+        argvals = tgrid$cca, integration = "trapezoidal",
+        bs = "ps", k = nbasis.cca
+      ) +
+        lf(X.rcst,
+          argvals = tgrid$rcst, integration = "trapezoidal",
+          bs = "ps", k = nbasis.rcst
+        ),
       data = train_df, method = "REML"
     )
-  } else {model}
+  } else {
+    model
+  }
   ypred <- predict(flm, newdata = test_df)
   list(
     model = flm,
@@ -385,7 +405,7 @@ dataConvert <- function(dataList) {
     X.rcst = I(dataList$X$rcst)
   )
 }
-modelFitAndEval <- function(trainData, testData, model=NULL, ...) {
+modelFitAndEval <- function(trainData, testData, model = NULL, ...) {
   trainData$X$cca <- fpcaImpute(trainData$X$cca, tgrid$cca)$X
   trainData$X$rcst <- fpcaImpute(trainData$X$rcst, tgrid$rcst)$X
   testData$X$cca <- fpcaImpute(testData$X$cca, tgrid$cca)$X
@@ -401,18 +421,22 @@ modelFitAndEval <- function(trainData, testData, model=NULL, ...) {
     pfr(
       Y ~
         af(
-          X.cca, argvals = tgrid$cca, Qtransform = TRUE,
+          X.cca,
+          argvals = tgrid$cca, Qtransform = TRUE,
           # k = c(nbasis.t, nbasis.cca)
           k = c(nbasis.t, nbasis.cca %/% 2)
         ) +
         af(
-          X.rcst, argvals = tgrid$rcst, Qtransform = TRUE,
+          X.rcst,
+          argvals = tgrid$rcst, Qtransform = TRUE,
           # k = c(nbasis.t, nbasis.rcst)
           k = c(nbasis.t, nbasis.rcst %/% 2)
         ),
       data = train_df, method = "REML"
     )
-  } else {model}
+  } else {
+    model
+  }
   # Predict on testData set
   ypred <- predict(fgam, newdata = test_df)
   list(

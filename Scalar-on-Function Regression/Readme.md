@@ -2,13 +2,6 @@
 
 ### Files
 
--   `SoFNN.R`: A function \`fit.sofnn\` is implemented to fit the scalar-on-function neural network.
--   `sof-fnn.Rmd`: Rmarkdown demonstrating an application of the SoF NN on the tecator dataset. Check `sof-fnn.pdf` for the compiled output.
-
-### Tecator Data
-
-![Tecator dataset](figures/tecator.jpg){width="432"}
-
-### Results
-
-![Model fitting results.](figures/sofnn-fit.jpg)
+-   `R/SoFNN.R`: A function \`fit.sofnn\` is implemented to fit the scalar-on-function neural network.
+-   `sof-dti.R`: Reproduce the experiment on the DTI dataset.
+-   `sof-tecator.R`: Reproduce the experiment on the tecator dataset.
