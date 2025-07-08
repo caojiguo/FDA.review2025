@@ -5,5 +5,5 @@ This directory contains the dataset and R implementation for the neural netowrk-
 ### Files
 
 - `asfr.RData`: The age-specific fertility rate (ASFR) data set.
-- `FoS_reg_functions.R`: The main functions to impletment NNBB, NNSS, NNBR & NNSR, along with two existing models (FoS linear and FAM). This file needs to be sourced.
-- `FoS_reg_demo.R`: Code for analyzing the age-specific fertility rate data set using the NN-based models (NNBB, NNSS, NNBR & NNSR) and the tranditional approaches (FoS linear and FAM).
+- `FoS_Functions.R`: The helper functions file, which needs to be sourced.
+- `FoS_demo.R`: Code for reproducing the numerical experiment on the age-specific fertility rate (ASFR) data set using the NN-based models (NNBB, NNSS, NNBR & NNSR) and the tranditional approaches (FoS linear and FAMM).

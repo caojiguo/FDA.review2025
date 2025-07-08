@@ -1,4 +1,4 @@
-# Functions defined for manuscript titled Neural Netowrks for Scalar Input and Fucntiaonl Output
+# Functions defined for manuscript titled Neural Networks for Scalar Input and Functional Output
 
 ### --- Basis Functions --- ###
 
