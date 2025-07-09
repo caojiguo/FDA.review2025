@@ -1,8 +1,5 @@
 """
-This script contains the code for importing and pre-processing the simulation data sets
-in the manuscript "Functional Autoencoder for Smoothing and Representation Learning".
-
-@author: Sidi Wu
+This script contains the code for importing and pre-processing the El Niño dataset.
 """
 
 import pandas as pd
@@ -12,7 +9,6 @@ import os
 import torch
 
 os.chdir("~"）
-os.chdir('C:/Users/Sidi/Desktop/FAE/FAE/GitHub/Code')
 
 #####################################
 ### Real application: ElNino data set

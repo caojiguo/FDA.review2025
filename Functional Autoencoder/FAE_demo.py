@@ -1,8 +1,6 @@
 """
-This script contains the code for implementing the proposed functional autoencoders (FAE) with regularly spaced functional data
-in the manuscript "Functional Autoencoder for Smoothing and Representation Learning".
-
-@author: Sidi Wu
+Before executing this script, please ensure you have run the Read_ElNino_data.py script to load the El Niño dataset.
+This is necessary to properly initialize the data required for the current script to function.
 """
 
 # Import modules
@@ -40,11 +38,15 @@ from statistics import stdev
 from datetime import datetime
 import matplotlib.ticker as mtick
 
-os.chdir('~/Code')
+os.chdir('~')
 if not os.getcwd() in sys.path:
     sys.path.append(os.getcwd())
-import Functions
-from Functions import *
+import FAE_Functions
+from FAE_Functions import *
+
+#***********************************#
+#----------  Perform FAE -----------#
+#***********************************#
 
 ###################################################################
 # Define the vanilla FAE architecture for regularly functional data
@@ -56,15 +58,24 @@ class FAE_vanilla(nn.Module):
         super(FAE_vanilla, self).__init__()
         ## Select one of the following options (comment out the other one)
         # Opt 1: Linear FAE with 1 hidden layer
-        self.fc1 = nn.Linear(n_basis_project, n_rep, bias=False)
-        self.fc3 = nn.Linear(n_rep, n_basis_revert, bias=False)
-        self.activation = nn.Identity()
+        # self.fc1 = nn.Linear(n_basis_project, n_rep, bias=False)
+        # self.fc3 = nn.Linear(n_rep, n_basis_revert, bias=False)
+        # self.activation = nn.Identity()
 
         # Opt 2: Nonlinear FAE with 3 hidden layers
-        # self.fc1 = nn.Linear(n_basis_project, 100, bias=False)
-        # self.fc2 = nn.Linear(100, n_rep, bias=False)
-        # self.fc3 = nn.Linear(n_rep, 100, bias=False)
-        # self.fc4 = nn.Linear(100, n_basis_revert, bias=False)
+        self.fc1 = nn.Linear(n_basis_project,50, bias=False)
+        self.fc2 = nn.Linear(50, n_rep, bias=False)
+        self.fc3 = nn.Linear(n_rep, 50, bias=False)
+        self.fc4 = nn.Linear(50, n_basis_revert, bias=False)
+        self.activation = nn.Sigmoid()
+
+        # Opt 3: Nonlinear FAE with 5 hidden layers
+        # self.fc1 = nn.Linear(n_basis_project, 50, bias=False)
+        # self.fc2 = nn.Linear(50, 100, bias=False)
+        # self.fc3 = nn.Linear(100, n_rep, bias=False)
+        # self.fc4 = nn.Linear(n_rep, 80, bias=False)
+        # self.fc5 = nn.Linear(80, 50, bias=False)
+        # self.fc6 = nn.Linear(50, n_basis_revert, bias=False)
         # self.activation = nn.Sigmoid()
 
         # initialize the weights to a specified, constant value
@@ -79,14 +90,22 @@ class FAE_vanilla(nn.Module):
 
         ## Select one of the following options accordingly (comment out the other one)
         # Opt 1: Linear FAE with 1 hidden layer
-        rep = self.activation(self.fc1(feature))
-        coef = self.fc3(rep)
+        # rep = self.activation(self.fc1(feature))
+        # coef = self.fc3(rep)
 
-        # Opt 2: Nonlinear inear FAE with 3 hidden layers
+        # Opt 2: Nonlinear FAE with 3 hidden layers
+        t1 = self.activation(self.fc1(feature))
+        rep = self.fc2(t1)
+        t2 = self.activation(self.fc3(rep))
+        coef = self.fc4(t2)
+
+        # Opt 3: Nonlinear FAE with 5 hidden layers
         # t1 = self.activation(self.fc1(feature))
-        # rep = self.fc2(t1)
-        # t2 = self.activation(self.fc3(rep))
-        # coef = self.fc4(t2)
+        # t2 = self.activation(self.fc2(t1))
+        # rep = self.fc3(t2)
+        # t3 = self.activation(self.fc4(rep))
+        # t4 = self.activation(self.fc5(t3))
+        # coef = self.fc6(t4)
 
         x_hat = self.Revert(coef, basis_fc_revert)
         return x_hat, rep, feature, coef
@@ -143,11 +162,8 @@ def pred(model, data):
 #####################################
 # Below are the settings for the implementation with ElNino data described in the real application section
 niter = 20
-seed(743)
+seed(63)
 niter_seed = random.sample(range(5000), niter)
-# niter = 10
-# seed(743)
-# niter_seed = random.sample(range(1000), niter)
 
 # Set up basis functions for input functional weights
 n_basis_project = 20
@@ -188,19 +204,20 @@ classification_FAE_train_niter = []
 classification_FAE_test_niter = []
 
 # Set up FAE's hyperparameters
-n_rep = 5 # number of representation
-lamb = 0.001 # penalty parameter
+n_rep = 3 # number of representation
+lamb = 0 # penalty parameter
 pen = "diff" # penalty type
-epochs = 5000 # epochs
-batch_size = 28 # batch size
+epochs = 3000 # epochs
+batch_size = 16 # batch size
 init_weight_sd = 0.5 # SD of normal dist. for initializing NN weight
-split_rate = 0.8 # percentage of training set
+split_rate = 0.6 # percentage of training set
 
 # Set up lists for training history
 FAE_reg_test_acc_epoch = [[] for x in range(int(epochs/100))]
 classification_FAE_reg_test_epoch = [[] for x in range(int(epochs/100))]
 
 # Start iterations
+FAE_time1 = datetime.now()
 for i in range(niter):
     # Split training/test set
     TrainData, TestData, TrainLabel, TestLabel, train_no = train_test_split(x, label, split_rate =split_rate, seed_no=niter_seed[i])
@@ -212,7 +229,7 @@ for i in range(niter):
     # Model Initialization
     model = FAE_vanilla(weight_std=init_weight_sd)
     loss_function = nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=1e-3, weight_decay=1e-6)
+    optimizer = optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-6)
     device = torch.device("cpu")
 
     epochs = epochs
@@ -254,6 +271,8 @@ for i in range(niter):
     classification_FAE_train_niter.append(FAE_classifier.score(FAE_reps_train.detach().numpy(), TrainLabel))
 
     print(f"Replicate {i+1} is complete.")
+FAE_time2 = datetime.now()
+FAE_time_diff = FAE_time2 - FAE_time1
 
 # Print for result tables
 print("--- FAE-Nonlinear Results --- \n"
@@ -266,7 +285,126 @@ print("--- FAE-Nonlinear Results --- \n"
       f"Test Classification Acc Mean: {mean(classification_FAE_test_niter[0:20]):.4f}; "
       f"Test Classification Acc SD: {std(classification_FAE_test_niter[0:20]):.4f}; \n")
 
-# Paired t-test for prediction error
-stats.ttest_rel(FAE_pred_test_acc_mean_niter, FPCA_pred_test_acc_mean_niter) # for MSE
-# Paired t-test for classification accuracy
-stats.ttest_rel(classification_FAE_test_niter, classification_FPCA_test_niter) # for classification accuracy
+
+#***********************************#
+#---------- Perform FPCA -----------#
+#***********************************#
+
+# Set up parameters
+n_basis = 10
+n_rep = 3
+basis_type = "Bspline"
+if  len(tpts)*0.9 < n_basis:
+    n_basis_fpca = 10
+else:
+    n_basis_fpca = n_basis
+if basis_type == "Bspline":
+    bss_fpca = representation.basis.BSpline(n_basis=n_basis_fpca, order=4)
+elif basis_type == "Fourier":
+    bss_fpca = representation.basis.Fourier([min(tpts.numpy().flatten()), max(tpts.numpy().flatten())],
+                                       n_basis=n_basis_fpca)
+tpts_FAE_plot = torch.tensor(np.arange(0, 1 + 1 / 100, 1 / 100))
+
+# Set up lists to save training info
+FPCA_train_no_niter = []
+fpc_scores_train_niter = []
+fpc_scores_test_niter = []
+fpc_scores_all_niter = []
+FPCA_pred_test_niter = []
+FPCA_pred_test_plot_niter = []
+FPCA_pred_all_niter = []
+FPCA_pred_train_acc_mean_niter = []
+FPCA_pred_test_acc_mean_niter = []
+FPCA_pred_train_acc_sd_niter = []
+FPCA_pred_test_acc_sd_niter = []
+classification_FPCA_train_niter = []
+classification_FPCA_test_niter = []
+
+# Start iterations
+FPCA_time1 = datetime.now()
+for i in range(niter):
+    # Split training/test set
+    TrainData, TestData, TrainLabel, TestLabel, train_no = train_test_split(x, label, split_rate=0.6, seed_no=niter_seed[i])
+    FPCA_train_no_niter.append(train_no)
+
+    tpts_fd = tpts.numpy().flatten()
+    fd_train = representation.grid.FDataGrid(TrainData.numpy(), tpts_fd)
+    fd_test = representation.grid.FDataGrid(TestData.numpy(), tpts_fd)
+    basis_fd_train = fd_train.to_basis(bss_fpca)
+    basis_fd_test = fd_test.to_basis(bss_fpca)
+    fpca_basis = fda.preprocessing.dim_reduction.feature_extraction.FPCA(n_components=n_rep)
+    # Get FPCs
+    fpca_basis = fpca_basis.fit(basis_fd_train)
+
+    # Get FPC scores
+    fpc_scores_test = fpca_basis.transform(basis_fd_test)
+    fpc_scores_test_niter.append(fpc_scores_test)
+    FPCA_pred = fpca_basis.inverse_transform(fpc_scores_test)._evaluate(tpts_fd)[:,:,0]
+    FPCA_pred_test_niter.append(FPCA_pred)
+    FPCA_pred_plot = fpca_basis.inverse_transform(fpc_scores_test)._evaluate(tpts_FAE_plot)[:,:,0]
+    FPCA_pred_test_plot_niter.append(FPCA_pred_plot)
+
+    # FPCA representation for all subjects and training subjects
+    fd_all = representation.grid.FDataGrid(x.numpy(), tpts_fd)
+    basis_fd_all = fd_all.to_basis(bss_fpca)
+    fpc_scores_all = fpca_basis.transform(basis_fd_all)
+    fpc_scores_all_niter.append(fpc_scores_all)
+    fpc_scores_train = fpc_scores_all[train_no]
+    fpc_scores_train_niter.append(fpc_scores_train)
+    FPCA_pred_train = fpca_basis.inverse_transform(fpc_scores_train)._evaluate(tpts_fd)[:, :, 0]
+    FPCA_pred_all_niter.append(fpca_basis.inverse_transform(fpc_scores_all)._evaluate(tpts_fd)[:, :, 0])
+
+    # Calculate prediction accuracy
+    FPCA_pred_test_acc_mean_niter.append(eval_mse_sdse(TestData, FPCA_pred)[0].tolist())
+    FPCA_pred_test_acc_sd_niter.append(eval_mse_sdse(TestData, FPCA_pred)[1].tolist())
+    FPCA_pred_train_acc_mean_niter.append(eval_mse_sdse(TrainData, FPCA_pred_train)[0].tolist())
+    FPCA_pred_train_acc_sd_niter.append(eval_mse_sdse(TrainData, FPCA_pred_train)[1].tolist())
+
+    ## Classification
+    # Create classifiers (logistic regression) & train the model with the training set
+    FPCA_classifier = LogisticRegression(solver='liblinear', random_state=0, multi_class='auto').fit(fpc_scores_train,TrainLabel)
+    # Classification accuracy on the test set
+    classification_FPCA_test_niter.append(FPCA_classifier.score(fpc_scores_test, TestLabel))
+    # Classification accuracy on the training set
+    classification_FPCA_train_niter.append(FPCA_classifier.score(fpc_scores_train, TrainLabel))
+FPCA_time2 = datetime.now()
+FPCA_time_diff = FPCA_time2 - FPCA_time1
+
+# Print for result tables
+print("--- FPCA Results --- \n"
+      f"Train Pred Acc Mean: {mean(FPCA_pred_train_acc_mean_niter):.4f}; "
+      f"Train Pred Acc SD: {std(FPCA_pred_train_acc_mean_niter):.4f}; \n"
+      f"Test Pred Acc Mean: {mean(FPCA_pred_test_acc_mean_niter):.4f}; "
+      f"Test Pred Acc SD: {std(FPCA_pred_test_acc_mean_niter):.4f}; \n"
+      f"Train Classification Acc Mean: {mean(classification_FPCA_train_niter):.4f}; "
+      f"Train Classification Acc SD: {std(classification_FPCA_train_niter):.4f}; \n"
+      f"Test Classification Acc Mean: {mean(classification_FPCA_test_niter):.4f}; "
+      f"Test Classification Acc SD: {std(classification_FPCA_test_niter):.4f}; \n")
+
+#***********************************#
+#----------  Create Plots ----------#
+#***********************************#
+
+# Boxplot comparing FAE & FPCA
+pred_result = pd.DataFrame({
+    'Prediction Error': FAE_pred_train_acc_mean_niter + FPCA_pred_train_acc_mean_niter +
+                        FAE_pred_test_acc_mean_niter + FPCA_pred_test_acc_mean_niter,
+    'Data Type': ['Train'] * 2 * niter + ['Test'] * 2 * niter,
+    'Method': ["FAE"] * niter + ['FPCA'] * niter  + ["FAE"] * niter + ['FPCA'] * niter
+})
+
+plt.figure(1, figsize=(13, 8))
+# plt.subplot(121)
+sns.boxplot(data=pred_result, x="Method", y="Prediction Error", hue='Data Type', palette='pastel',
+            dodge=True,  # Ensures boxes are separated by hue
+            width=0.6)  # Reduce box width to add space
+            # gap=0.2)  # Adds space between boxes (seaborn >= 0.12))
+# sns.stripplot(data=pred_result, x="Method", y="Prediction Error", hue='Data Type', size=3, color=".3")
+
+plt.legend(title='', fontsize=18)
+plt.xlabel('', fontsize=20)
+plt.ylabel('Reconstruction Error', fontsize=20)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
+plt.savefig(f"Boxplot_FAE_vs_FPCA.pdf", format="pdf", bbox_inches='tight', pad_inches=0.1)
+plt.close()
