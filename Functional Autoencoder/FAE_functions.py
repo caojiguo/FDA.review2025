@@ -1,8 +1,6 @@
 """
 This script contains the self-defined functions used for running the existing and proposed methods implemented
 in the manuscript "Functional Autoencoder for Smoothing and Representation Learning".
-
-@author: Sidi Wu
 """
 import random
 from random import seed
