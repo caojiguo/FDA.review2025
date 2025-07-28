@@ -260,11 +260,11 @@ for (i in 1:6) {
   }
   if (i ==1) {  # First column
     axis(2, cex.axis = 1.5)
-    mtext(expression(paste("1st basis coefficient (", c^1, ")")), side = 2, line = 2.5, cex = 1)
+    mtext(expression(paste("1st basis coefficient (", c[1], ")")), side = 2, line = 2.5, cex = 1)
   }
   if (i ==4) {  # First column
     axis(2, cex.axis = 1.5)
-    mtext(expression(paste("2nd basis coefficient (", c^2, ")")), side = 2, line = 2.5, cex = 1)
+    mtext(expression(paste("2nd basis coefficient (", c[2], ")")), side = 2, line = 2.5, cex = 1)
   }
 }
 
