@@ -18,6 +18,7 @@ library(gbm)
 library(stringr)
 library(future)
 source("FNN_FunctionsFile.R")
+source("mfDNN_FunctionsFile.R")
 
 # Clearing backend
 K <- backend()
@@ -26,7 +27,7 @@ options(warn=-1)
 
 # Setting seeds
 set.seed(1919)
-set_random_seed(1919)
+set_random_seed(119)
 
 # Loading data
 data(phoneme)
@@ -69,7 +70,7 @@ num_folds = 10
 fold_ind = createFolds(resp, k = num_folds)
 
 # number of models
-num_models = 7
+num_models = 8
 
 # number of measures
 num_measures = 5
@@ -82,6 +83,7 @@ error_mat_np = matrix(nrow = num_folds, ncol = num_measures)
 error_mat_fnn = matrix(nrow = num_folds, ncol = num_measures)
 error_mat_svm = matrix(nrow = num_folds, ncol = num_measures)
 error_mat_nn = matrix(nrow = num_folds, ncol = num_measures)
+error_mat_mfdnn = matrix(nrow = num_folds, ncol = num_measures)
 
 # Doing pre-processing of neural networks
 if(dim(final_data)[3] > 1){
@@ -95,8 +97,7 @@ if(dim(final_data)[3] > 1){
                            covariate_scaling = T,
                            raw_data = F)
   
-} else {
-  
+} else{
   # Now, let's pre-process
   pre_dat = FNN_Preprocess(func_cov = final_data,
                            basis_choice = c("fourier"),
@@ -123,10 +124,6 @@ for (i in 1:num_folds) {
   test_x = fdata_obj[fold_ind[[i]],]
   train_y = resp[-fold_ind[[i]]]
   test_y = resp[fold_ind[[i]]]
-  
-  # Setting up for FNN
-  pre_train = pre_dat$data[-fold_ind[[i]], ]
-  pre_test = pre_dat$data[fold_ind[[i]], ]
 
   ###########################################
   # Running Functional Linear Model (Basis) #
@@ -190,7 +187,7 @@ for (i in 1:num_folds) {
   set.seed(i)
   set_random_seed(i)
 
-  # Setting up FNN model
+  # Setting up NN model
   model_nn <- keras_model_sequential()
   model_nn %>%
     layer_dense(units = 64, activation = 'relu') %>%
@@ -227,6 +224,10 @@ for (i in 1:num_folds) {
   #####################################
   # Running Functional Neural Network #
   #####################################
+  
+  # Setting up for FNN
+  pre_train = pre_dat$data[-fold_ind[[i]], ]
+  pre_test = pre_dat$data[fold_ind[[i]], ]
   
   # Setting seeds
   set.seed(i)
@@ -274,6 +275,25 @@ for (i in 1:num_folds) {
   func_weights1[i,] = rowMeans(get_weights(model_fnn)[[1]])[1:5]
   func_weights2[i,] = rowMeans(get_weights(model_fnn)[[1]])[6:12]
   func_weights3[i,] = rowMeans(get_weights(model_fnn)[[1]])[13:21]
+  
+  
+  ################
+  # Running mFDNN
+  ###############
+
+  # Setting up for FDNN
+  x.train.mfdnn = full_df[-fold_ind[[i]],]
+  x.test.mfdnn = full_df[fold_ind[[i]],]
+  train_y = resp[-fold_ind[[i]]]
+  test_y = resp[fold_ind[[i]]]
+
+  J=10; L=3; p=300; s=0.1
+  #fit mfdnn model
+  r1=mfdnn.1d(x.train.mfdnn, x.test.mfdnn, train_y, test_y, J, S= timepts, L, p, s, epoch=300, batch=20)
+  preds_mfdnn = apply(r1$y.prob, 1, function(x){return(which.max(x))}) - 1
+
+  # Plotting
+  confusion_mfdnn = confusionMatrix(as.factor(preds_mfdnn), as.factor(test_y))
 
   ###################
   # Storing Results #
@@ -314,6 +334,12 @@ for (i in 1:num_folds) {
                         mean(confusion_nn$byClass[,2], na.rm = T), 
                         mean(confusion_nn$byClass[,3], na.rm = T),
                         mean(confusion_nn$byClass[,4], na.rm = T))
+  error_mat_mfdnn[i, ] = c(confusion_mfdnn$overall[1],
+                           mean(confusion_mfdnn$byClass[,1], na.rm = T),
+                           mean(confusion_mfdnn$byClass[,2], na.rm = T),
+                           mean(confusion_mfdnn$byClass[,3], na.rm = T),
+                           mean(confusion_mfdnn$byClass[,4], na.rm = T))
+  
   
   # Resetting things
   K <- backend()
@@ -337,6 +363,7 @@ Accuracy_Table[,4] = error_mat_pls[,1]
 Accuracy_Table[,5] = error_mat_svm[,1]
 Accuracy_Table[,6] = error_mat_nn[,1]
 Accuracy_Table[,7] = error_mat_fnn[,1]
+Accuracy_Table[,8] = error_mat_mfdnn[,1]
 
 Final_Table[1, ] = c(colMeans(error_mat_flm, na.rm = T), sd(error_mat_flm[,1]))
 Final_Table[2, ] = c(colMeans(error_mat_np, na.rm = T), sd(error_mat_np[,1]))
@@ -345,11 +372,12 @@ Final_Table[4, ] = c(colMeans(error_mat_pls, na.rm = T), sd(error_mat_pls[,1]))
 Final_Table[5, ] = c(colMeans(error_mat_svm, na.rm = T), sd(error_mat_svm[,1]))
 Final_Table[6, ] = c(colMeans(error_mat_nn, na.rm = T), sd(error_mat_nn[,1]))
 Final_Table[7, ] = c(colMeans(error_mat_fnn, na.rm = T), sd(error_mat_fnn[,1]))
+Final_Table[8, ] = c(colMeans(error_mat_mfdnn, na.rm = T), sd(error_mat_mfdnn[,1]))
 
 
 # Editing names
 rownames(Final_Table) = colnames(Accuracy_Table) = 
-  c("FLM", "FNP", "FPC", "FPLS","SVM", "NN", "FNN")
+  c("FLM", "FNP", "FPC", "FPLS","SVM", "NN", "FNN", "mFDNN")
 colnames(Final_Table) = c("Accuracy", "Sensitivity", "Specificity", "PPV", "NPV Rate", "SD_Error")
 
 # Looking at results
@@ -360,7 +388,7 @@ Accuracy_Table
 library(ggplot2)
 library(reshape2)  # For melt function
 
-accuracy_df <- melt(Accuracy_Table[, c("FLM", "FNP", "FPC",  "FPLS", "SVM", "NN", "FNN")])
+accuracy_df <- melt(Accuracy_Table[, c("FLM", "FNP", "FPC",  "FPLS", "SVM", "NN", "FNN", "mFDNN")])
 colnames(accuracy_df) <- c("Iteration", "Method","Accuracy")
 # Create boxplot with mean values
 ggplot(accuracy_df, aes(x=Method, y=Accuracy, fill=Method)) +
