@@ -7,5 +7,5 @@ The **Datasets** folder contains files realted to the *El Niño* data set, inclu
 
 ### Files
 - `FAE_Read_ElNino_Data.py`: Code for importing and pre-processing the *El Niño* data set.
-- `FAE_demo.py`: Code for reproducing the numerical experiment with the El Niño dataset.
+- `FAE_demo.py`: Code for reproducing the numerical experiment with the *El Niño* dataset.
 - `FAE_Functions.py`: The helper functions file, which needs to be sourced.
