@@ -377,7 +377,7 @@ Final_Table[8, ] = c(colMeans(error_mat_mfdnn, na.rm = T), sd(error_mat_mfdnn[,1
 
 # Editing names
 rownames(Final_Table) = colnames(Accuracy_Table) = 
-  c("FLM", "FNP", "FPC", "FPLS","SVM", "NN", "FNN", "mFDNN")
+  c("FLM", "FNP", "FPC", "FPLS","SVM", "NN", "FNN", "mfDNN")
 colnames(Final_Table) = c("Accuracy", "Sensitivity", "Specificity", "PPV", "NPV Rate", "SD_Error")
 
 # Looking at results
@@ -388,7 +388,7 @@ Accuracy_Table
 library(ggplot2)
 library(reshape2)  # For melt function
 
-accuracy_df <- melt(Accuracy_Table[, c("FLM", "FNP", "FPC",  "FPLS", "SVM", "NN", "FNN", "mFDNN")])
+accuracy_df <- melt(Accuracy_Table[, c("FLM", "FNP", "FPC",  "FPLS", "SVM", "NN", "FNN", "mfDNN")])
 colnames(accuracy_df) <- c("Iteration", "Method","Accuracy")
 # Create boxplot with mean values
 ggplot(accuracy_df, aes(x=Method, y=Accuracy, fill=Method)) +
